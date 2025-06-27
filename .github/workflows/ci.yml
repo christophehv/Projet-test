@@ -43,6 +43,10 @@ jobs:
         pip install -r requirements.txt
         pip install pytest-cov
 
+    - name: Init DB schema
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -u user -puserpass users_db < backend/initdb/1-schema.sql
+
     - name: Run Python tests with coverage
       run: |
         cd backend
