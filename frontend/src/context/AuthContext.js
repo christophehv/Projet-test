@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const login = (userData) => {
     setUser(userData);
     localStorage.setItem('token', userData.token);
-    localStorage.setItem('isAdmin', userData.is_admin);
+    localStorage.setItem('isAdmin', userData.is_admin === true || userData.is_admin === 1 ? 'true' : 'false');
   };
 
   const logout = () => {

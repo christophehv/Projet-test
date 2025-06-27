@@ -13,24 +13,16 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Configuration de la base de données
-db_config = {
-    'host': os.getenv('MYSQL_HOST', 'mysql'),
-    'user': os.getenv('MYSQL_USER', 'user'),
-    'password': os.getenv('MYSQL_PASSWORD', 'userpass'),
-    'database': os.getenv('MYSQL_DATABASE', 'users_db')
-}
-
 # Clé secrète pour JWT
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
 
 def get_db_connection():
     return mysql.connector.connect(
-        host=os.getenv("DB_HOST"),
-        port=int(os.getenv("DB_PORT", 3306)),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
+        host=os.environ.get("DB_HOST"),
+        port=int(os.environ.get("DB_PORT", 3306)),
+        user=os.environ.get("DB_USER"),
+        password=os.environ.get("DB_PASSWORD"),
+        database=os.environ.get("DB_NAME"),
         ssl_disabled=False  # obligatoire avec Aiven (SSL mode REQUIRED)
     )
 
@@ -78,6 +70,7 @@ def register():
 def login():
     data = request.get_json()
     
+    
     if not all(k in data for k in ["username", "password"]):
         return jsonify({'message': 'Missing required fields'}), 400
     
@@ -88,6 +81,11 @@ def login():
         cursor.execute("SELECT * FROM users WHERE username = %s", (data['username'],))
         user = cursor.fetchone()
         
+        print("Mot de passe reçu:", data['password'])
+        print("Hash en base:", user['password'] if user else None)
+        if user:
+            print("Résultat bcrypt:", bcrypt.checkpw(data['password'].encode('utf-8'), user['password'].encode('utf-8')))
+        
         if user and bcrypt.checkpw(data['password'].encode('utf-8'), user['password'].encode('utf-8')):
             token = jwt.encode({
                 'user_id': user['id'],
@@ -97,7 +95,7 @@ def login():
             
             return jsonify({
                 'token': token,
-                'is_admin': user['is_admin']
+                'is_admin': bool(user['is_admin'])
             })
         
         return jsonify({'message': 'Invalid credentials'}), 401
